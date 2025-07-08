@@ -2,7 +2,7 @@ export const galleryModels = [
   {
     id: "jbl-flip6",
     title: "JBL Flip 6",
-    media: ["https://example.com/jbl-flip6.jpg"],
+    media: ["Images/jbl-flip6.png"],
     metadata: {
       description: "Blue JBL Flip 6 portable speaker",
       color: "Blue"

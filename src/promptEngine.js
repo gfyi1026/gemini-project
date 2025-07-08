@@ -3,3 +3,5 @@ export function generatePrompt(template, gallery) {
     .replace('{mediaUrl}', gallery.media[0])
     .replace('{description}', gallery.metadata.description || '');
 }
+
+
