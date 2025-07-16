@@ -20,5 +20,5 @@ export const galleryModels = [
       color: "Blue"
     }
   },
-  // Add more gallery models as needed
+  // can add more if i want
 ];
