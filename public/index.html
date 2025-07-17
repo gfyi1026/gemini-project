@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gemini Image Q&A</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Gemini Image Q&A</h1>
+    <form id="gemini-form">
+      <label>Image URL 1:</label>
+      <input type="text" id="image1" required placeholder="Paste image URL here">
+      <label>Image URL 2 (optional):</label>
+      <input type="text" id="image2" placeholder="Paste second image URL for comparison">
+      <label>Product Description (optional, but needed for color accuracy):</label>
+      <input type="text" id="description" placeholder="e.g. Red JBL Go 4 portable speaker">
+      <small>Tip: For best results, provide the official product description (e.g. “Red JBL Go 4 portable speaker”).</small>
+
+      <div class="questions">
+        <label><input type="checkbox" value="color_accuracy"> Is the product color accurate?</label>
+        <label><input type="checkbox" value="product_match"> Is this the correct product model?</label>
+        <label><input type="checkbox" value="image_comparison"> Do these two images show the same product and color?</label>
+        <label><input type="checkbox" value="image_defect_comparison"> Are both products in perfect condition without any visible defects?</label>
+      </div>
+      <button type="submit">Ask Gemini</button>
+    </form>
+
+    <div class="images-preview" id="images-preview"></div>
+    <div class="result" id="result" style="display:none"></div>
+  </div>
+
+  <script>
+    // Show image previews
+    function updatePreview() {
+      const img1 = document.getElementById('image1').value;
+      const img2 = document.getElementById('image2').value;
+      const preview = document.getElementById('images-preview');
+      preview.innerHTML = '';
+      if (img1) preview.innerHTML += `<img src="${img1}" alt="Image 1">`;
+      if (img2) preview.innerHTML += `<img src="${img2}" alt="Image 2">`;
+    }
+    document.getElementById('image1').addEventListener('input', updatePreview);
+    document.getElementById('image2').addEventListener('input', updatePreview);
+
+    // Handle form submit
+    document.getElementById('gemini-form').onsubmit = async function(e) {
+      e.preventDefault();
+      const image1 = document.getElementById('image1').value.trim();
+      const image2 = document.getElementById('image2').value.trim();
+      const questionEls = document.querySelectorAll('.questions input:checked');
+      const questions = Array.from(questionEls).map(q => q.value);
+      const description = document.getElementById('description').value.trim();
+
+      if (!image1 || questions.length === 0) {
+        alert('Please provide at least one image and select at least one question.');
+        return;
+      }
+
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('result').innerText = 'Gemini is thinking...';
+
+      // Send to backend
+      const response = await fetch('/api/ask-gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          images: image2 ? [image1, image2] : [image1],
+          questions: questions,
+          description: description
+        })
+      });
+      const data = await response.json();
+
+      // Show answers
+      let html = '';
+      for (const q of questions) {
+        const ans = data[q];
+        if (!ans) continue;
+        let yesNo = '';
+        if (/\\byes\\b/i.test(ans)) yesNo = '<span class="answer-yes">Yes</span>';
+        else if (/\\bno\\b/i.test(ans)) yesNo = '<span class="answer-no">No</span>';
+        html += `<div><strong>Q:</strong> ${q.replace(/_/g, ' ')}<br>
+        <strong>Gemini:</strong> ${ans}<br>
+        <strong>Final Answer:</strong> ${yesNo || 'N/A'}</div><hr>`;
+      }
+      document.getElementById('result').innerHTML = html || 'No answer received.';
+    };
+  </script>
+</body>
+</html>
